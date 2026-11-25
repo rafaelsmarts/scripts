@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Sigma · RouterOS v7 Script Generator</title>
+<style>
+:root{
+  --bg:#090d16;
+  --bg-side:#0d1320;
+  --hdr:#0b111e;
+  --panel:#111827;
+  --panel-h:#162032;
+  --input-bg:#0b101b;
+  --border:#1e293b;
+  --border2:#334155;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+  --accent:#38bdf8;
+  --accent-d:#0284c7;
+  --accent-glow:rgba(56,189,248,.14);
+  --code-bg:#06090f;
+  --code-h:#0d131f;
+  --ok:#34d399;
+  --ok-l:rgba(16,185,129,.14);
+  --warn:#fbbf24;
+  --warn-l:rgba(245,158,11,.14);
+  --err:#f87171;
+  --err-l:rgba(239,68,68,.14);
+  --info-l:rgba(56,189,248,.12);
+  --rb:#a78bfa;
+  --rb-l:rgba(167,139,250,.15);
+  --mono:"JetBrains Mono","Cascadia Code",Consolas,"Liberation Mono",Menlo,monospace;
+  --sans:"Inter","Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;color-scheme:dark}
+body{margin:0;font-family:var(--sans);font-size:14px;line-height:1.55;color:var(--text);background:radial-gradient(circle at 80% 0%,#112240 0%,var(--bg) 55%);min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:12.5px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.22);border-radius:5px;padding:1px 6px;color:#7dd3fc}
+
+/* ---------- header ---------- */
+header.top{position:sticky;top:0;z-index:20;height:62px;display:flex;align-items:center;gap:16px;padding:0 26px;
+  background:rgba(11,17,30,.85);backdrop-filter:blur(12px);color:#fff;border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none;font-size:16.5px;letter-spacing:.2px;white-space:nowrap}
+.brand:hover{text-decoration:none}
+.brand b{font-weight:700;background:linear-gradient(90deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.brand svg{flex:none;filter:drop-shadow(0 0 8px rgba(56,189,248,.35))}
+.tag-v7{font:700 11px var(--mono);letter-spacing:.6px;color:#38bdf8;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);border-radius:6px;padding:4px 10px}
+.tag-std{font:600 10.5px var(--sans);letter-spacing:.7px;text-transform:uppercase;color:var(--ok);background:var(--ok-l);border:1px solid rgba(52,211,153,.28);border-radius:6px;padding:4px 9px}
+.spacer{flex:1}
+.hdr-link{color:var(--muted);text-decoration:none;font-size:13px;white-space:nowrap;transition:.15s}
+.hdr-link:hover{color:#fff;text-decoration:none}
+
+/* ---------- layout ---------- */
+.layout{display:grid;grid-template-columns:265px minmax(0,1fr)}
+nav.side{position:sticky;top:62px;height:calc(100vh - 62px);overflow:auto;background:var(--bg-side);border-right:1px solid var(--border);padding:14px 12px 24px}
+nav.side h6{margin:18px 12px 6px;font:700 10.5px var(--sans);text-transform:uppercase;letter-spacing:1.1px;color:#64748b}
+nav.side a{display:flex;align-items:center;gap:10px;padding:9px 14px;margin:2px 0;color:#cbd5e1;text-decoration:none;border-radius:8px;font-size:13.5px;transition:.15s;border:1px solid transparent}
+nav.side a svg{flex:none;color:#64748b;transition:.15s}
+nav.side a:hover{background:rgba(255,255,255,.04);color:#fff;text-decoration:none}
+nav.side a.active{background:var(--accent-glow);border-color:rgba(56,189,248,.28);color:#38bdf8;font-weight:600}
+nav.side a.active svg{color:#38bdf8}
+.side-foot{margin:26px 12px 0;padding-top:14px;border-top:1px solid var(--border);font-size:11.5px;color:#64748b;line-height:1.5}
+main{padding:28px 42px 80px;min-width:0}
+.page{display:none;max-width:1220px}
+.page.on{display:block;animation:fadeIn .18s ease-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.crumbs{font-size:12px;color:var(--muted)}
+.crumbs span{margin:0 6px;color:#475569}
+h1{font-size:28px;font-weight:700;margin:6px 0 8px;letter-spacing:-.4px;color:#f8fafc}
+h2{font-size:18px;font-weight:600;margin:34px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--border);color:#f1f5f9}
+.lead{color:var(--muted);max-width:920px;margin:0 0 10px;font-size:14.5px}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 6px}
+.pill{font:600 11px var(--sans);padding:4px 10px;border-radius:999px;background:rgba(148,163,184,.12);color:#cbd5e1;border:1px solid rgba(148,163,184,.2)}
+.pill.blue{background:var(--info-l);color:#7dd3fc;border-color:rgba(56,189,248,.25)}
+.pill.green{background:var(--ok-l);color:var(--ok);border-color:rgba(52,211,153,.28)}
+
+/* ---------- cards / forms ---------- */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin:18px 0;box-shadow:0 8px 24px rgba(0,0,0,.28);overflow:hidden}
+.card>h3{margin:0;padding:13px 18px;font-size:13.5px;font-weight:600;border-bottom:1px solid var(--border);background:var(--panel-h);display:flex;align-items:center;gap:10px;color:#f8fafc}
+.card>h3 .sub{font-weight:400;color:var(--muted);font-size:12px}
+.card .body{padding:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:14px 20px}
+.grid .full{grid-column:1/-1}
+.wan-box{border:1px solid var(--border2);border-radius:8px;padding:15px;background:rgba(11,16,27,.55);margin-bottom:14px}
+.wan-box:last-child{margin-bottom:0}
+.wan-box h4{margin:0 0 12px;font-size:13.5px;color:#38bdf8;display:flex;align-items:center;gap:8px}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#cbd5e1}
+.hint{font-weight:400;color:var(--muted);font-size:11.5px;line-height:1.45}
+input[type=text],input[type=number],select,textarea{width:100%;font:13px var(--mono);padding:8px 11px;border:1px solid var(--border2);border-radius:7px;background:var(--input-bg);color:var(--text);transition:.15s}
+textarea{min-height:76px;resize:vertical;line-height:1.55}
+select{font-family:var(--sans)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(56,189,248,.18)}
+.chks{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px 20px;margin-top:8px}
+.chk{display:flex;gap:9px;align-items:flex-start;font-size:13px;cursor:pointer;color:#e2e8f0}
+.chk input{margin-top:3px;accent-color:var(--accent)}
+.chk small{display:block;color:var(--muted);font-size:11.5px}
+table.rows{width:100%;border-collapse:collapse;margin-bottom:12px}
+table.rows th{font:700 11px var(--sans);text-transform:uppercase;letter-spacing:.6px;color:var(--muted);text-align:left;padding:8px 8px;border-bottom:1px solid var(--border2)}
+table.rows td{padding:7px 6px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.rows td.n,table.rows th.n{width:34px;text-align:center;font:700 12px var(--mono);color:#64748b}
+table.rows td.x,table.rows th.x{width:40px;text-align:center}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid transparent;background:linear-gradient(135deg,var(--accent-d),#2563eb);color:#fff;font:600 12.5px var(--sans);padding:8px 14px;border-radius:7px;cursor:pointer;text-decoration:none;transition:.15s;box-shadow:0 2px 10px rgba(2,132,199,.3)}
+.btn:hover{filter:brightness(1.1);text-decoration:none}
+.btn.ghost{background:rgba(56,189,248,.08);color:#7dd3fc;border-color:rgba(56,189,248,.28);box-shadow:none}
+.btn.ghost:hover{background:rgba(56,189,248,.16)}
+.btn.sm{padding:5px 11px;font-size:12px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.icon-btn{border:1px solid transparent;background:transparent;color:#64748b;width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:13px;transition:.15s}
+.icon-btn:hover:not(:disabled){background:var(--err-l);color:var(--err);border-color:rgba(248,113,113,.3)}
+.icon-btn:disabled{opacity:.25;cursor:not-allowed}
+
+/* ---------- notes ---------- */
+.note{border:1px solid;border-left-width:4px;border-radius:8px;padding:12px 16px;margin:14px 0;font-size:13px}
+.note b:first-child{display:block;margin-bottom:4px}
+.note ul{margin:4px 0 0;padding-left:20px}
+.note.info{background:var(--info-l);border-color:rgba(56,189,248,.25);border-left-color:var(--accent)}
+.note.warn{background:var(--warn-l);border-color:rgba(251,191,36,.28);border-left-color:var(--warn)}
+.note.err{background:var(--err-l);border-color:rgba(248,113,113,.28);border-left-color:var(--err)}
+.note.ok{background:var(--ok-l);border-color:rgba(52,211,153,.28);border-left-color:var(--ok)}
+
+/* ---------- docs tables ---------- */
+table.props{width:100%;border-collapse:collapse;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:13px;margin:10px 0}
+table.props th{background:var(--panel-h);text-align:left;padding:9px 13px;border-bottom:1px solid var(--border);font-weight:600;font-size:12px;color:#cbd5e1;text-transform:uppercase;letter-spacing:.4px}
+table.props td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:top;color:#e2e8f0}
+table.props tr:last-child td{border-bottom:0}
+table.props td:first-child{font-family:var(--mono);font-size:12.5px;white-space:nowrap;color:#38bdf8;font-weight:600}
+
+/* ---------- output ---------- */
+.out-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:30px 0 6px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.out-bar h2{border:0;margin:0;padding:0}
+.out-bar .acts{display:flex;gap:8px}
+.block{background:var(--panel);border:1px solid var(--border);border-left:4px solid #64748b;border-radius:10px;margin:16px 0;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.block.imp-none{border-left-color:var(--ok)}
+.block.imp-low{border-left-color:var(--warn)}
+.block.imp-high{border-left-color:var(--err)}
+.block.imp-check{border-left-color:var(--accent)}
+.block.imp-rollback{border-left-color:var(--rb)}
+.block-h{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--panel-h);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.block-n{font:700 11px var(--mono);background:#1e293b;color:#e2e8f0;border:1px solid var(--border2);padding:3px 9px;border-radius:5px;letter-spacing:.5px}
+.imp-rollback .block-n{background:var(--rb-l);color:#c4b5fd;border-color:rgba(167,139,250,.35)}
+.block-t{font-weight:600;font-size:14px;flex:1;min-width:200px;color:#f8fafc}
+.badge{font:700 10px var(--sans);letter-spacing:.6px;text-transform:uppercase;padding:3px 10px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.badge.none{background:var(--ok-l);color:var(--ok);border-color:rgba(52,211,153,.3)}
+.badge.low{background:var(--warn-l);color:var(--warn);border-color:rgba(251,191,36,.3)}
+.badge.high{background:var(--err-l);color:var(--err);border-color:rgba(248,113,113,.3)}
+.badge.check{background:var(--info-l);color:#7dd3fc;border-color:rgba(56,189,248,.3)}
+.badge.rollback{background:var(--rb-l);color:#c4b5fd;border-color:rgba(167,139,250,.3)}
+.block-d{margin:0;padding:12px 16px 0;color:var(--muted);font-size:13px}
+.safemode{margin:10px 16px 0;padding:9px 13px;background:var(--err-l);border:1px solid rgba(248,113,113,.3);border-radius:7px;color:#fca5a5;font-size:12.5px}
+.term{margin:12px 16px 0;border-radius:8px;overflow:hidden;border:1px solid #1e293b;box-shadow:inset 0 2px 8px rgba(0,0,0,.4)}
+.term-h{display:flex;justify-content:space-between;align-items:center;background:var(--code-h);color:#64748b;font:11.5px var(--mono);padding:7px 14px;border-bottom:1px solid #172030}
+.term-h i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:#334155}
+.term-h i:nth-child(1){background:#ef4444}
+.term-h i:nth-child(2){background:#f59e0b}
+.term-h i:nth-child(3){background:#10b981}
+pre.code{margin:0;padding:14px 16px;background:var(--code-bg);color:#e2e8f0;font:12.5px/1.68 var(--mono);overflow-x:auto;white-space:pre;tab-size:4}
+pre.code .c{color:#64748b;font-style:italic}
+pre.code .p{color:#38bdf8}
+pre.code .k{color:#c084fc}
+pre.code .a{color:#fbbf24}
+pre.code .o{color:#64748b}
+pre.code .s{color:#34d399}
+pre.code .v{color:#f1f5f9}
+pre.code .b{color:#64748b}
+.expect{margin:12px 16px 16px;padding:10px 14px;background:var(--input-bg);border:1px solid var(--border);border-radius:7px;font-size:12.5px;color:#cbd5e1}
+.expect b{color:var(--ok);font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+.expect ul{margin:5px 0 0;padding-left:18px}
+.block>.term:last-child{margin-bottom:16px}
+
+.dist{display:flex;height:34px;border-radius:7px;overflow:hidden;margin:2px 0 14px;font:700 12px var(--sans);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.dist div{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;min-width:60px}
+
+/* ---------- home ---------- */
+.tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin:20px 0}
+.tool{display:block;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:20px;text-decoration:none;color:var(--text);transition:.18s;box-shadow:0 4px 16px rgba(0,0,0,.22)}
+.tool:hover{border-color:var(--accent);box-shadow:0 8px 26px rgba(56,189,248,.14);transform:translateY(-2px);text-decoration:none}
+.tool .ic{width:40px;height:40px;border-radius:8px;background:var(--info-l);border:1px solid rgba(56,189,248,.25);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.tool h4{margin:0 0 6px;font-size:15.5px;color:#f8fafc}
+.tool p{margin:0;color:var(--muted);font-size:13px}
+
+footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--border);color:#64748b;font-size:12px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e293b;color:#f8fafc;border:1px solid var(--accent);padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:50;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  nav.side{position:static;height:auto;display:flex;flex-wrap:wrap;padding:8px}
+  nav.side h6,.side-foot{display:none}
+  nav.side a{padding:7px 11px}
+  main{padding:18px}
+  .tag-std,.hdr-link{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="#home">
+    <svg width="30" height="30" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <rect x="2" y="9" width="28" height="14" rx="3" stroke="#38bdf8" stroke-width="2"/>
+      <circle cx="8" cy="16" r="1.7" fill="#38bdf8"/><circle cx="13" cy="16" r="1.7" fill="#34d399"/><circle cx="18" cy="16" r="1.7" fill="#64748b"/>
+      <path d="M23 14h4M23 18h4" stroke="#e2e8f0" stroke-width="1.6"/>
+      <path d="M9 9V5M23 9V5" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <span>Smart Sigma · <b>RouterOS Generator</b></span>
+  </a>
+  <span class="tag-v7">RouterOS v7</span>
+  <span class="tag-std">Padrão Notion Smart Sigma</span>
+  <div class="spacer"></div>
+  <a class="hdr-link" href="https://help.mikrotik.com/docs/" target="_blank" rel="noopener">Docs MikroTik ↗</a>
+</header>
+
+<div class="layout">
+<nav class="side">
+  <h6>Início</h6>
+  <a href="#home" data-page="home"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 7.5 8 2.5l6 5V14h-4V10H6v4H2z"/></svg>Visão geral</a>
+  <h6>Provisionamento</h6>
+  <a href="#full" data-page="full"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2.5" width="12" height="11" rx="1.8"/><path d="M5 6h6M5 9h6M5 11.5h4"/></svg>Config Completa (Notion)</a>
+  <h6>Roteamento</h6>
+  <a href="#pcc" data-page="pcc"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 8h4l3-4.5h5M5 8l3 4.5h5M11.5 1.5l2 2-2 2M11.5 10.5l2 2-2 2"/></svg>Load Balance PCC</a>
+  <a href="#failover" data-page="failover"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 5h10.5L10 2.5M14 11H3.5L6 13.5"/></svg>Failover (Passo 11)</a>
+  <h6>QoS & Firewall</h6>
+  <a href="#cake" data-page="cake"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1.5 14h13M4 11v3M8 6.5V14M12 2.5V14"/></svg>Fila CAKE</a>
+  <a href="#portfwd" data-page="portfwd"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1.5 8h9M7.5 4.5 11 8l-3.5 3.5M14 2v12"/></svg>Port Forward (DST-NAT)</a>
+  <div class="side-foot">Exclusivo RouterOS v7 (7.20.8)<br>Padrão oficial do Notion Smart Sigma</div>
+</nav>
+
+<main>
+
+<!-- ================= HOME ================= -->
+<section class="page" id="page-home">
+  <div class="crumbs">RouterOS v7<span>›</span>Ferramentas</div>
+  <h1>Smart Sigma · RouterOS v7 Generator</h1>
+  <p class="lead">Gerador de scripts para MikroTik RouterOS v7 seguindo 100% o manual oficial do <b>Notion da Smart Sigma</b>: desde a configuração completa de bancada (IP Fixo, DHCP ou PPPoE) até Failover com Netwatch + Blackhole, Load Balance PCC e Fila CAKE.</p>
+  <div class="meta">
+    <span class="pill blue">Exclusivo RouterOS v7</span>
+    <span class="pill green">Config Completa (Passos 2 a 17)</span>
+    <span class="pill green">Netwatch + Blackhole (Dist 254)</span>
+    <span class="pill green">Auto-Disable FastTrack</span>
+  </div>
+
+  <div class="tools">
+    <a class="tool" href="#full"><div class="ic"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2.5" width="12" height="11" rx="1.8"/><path d="M5 6h6M5 9h6M5 11.5h4"/></svg></div><h4>Config Completa (Padrão Notion)</h4><p>Gera o script de implantação do zero (Passos 2 a 17): Interfaces, Bridge LAN, DNS, DHCP, NAT, Links (IP Fixo, PPPoE ou DHCP), Rotas, Failover, Segurança, SNMP, Mangle WAN2 e DDNS.</p></a>
+    <a class="tool" href="#pcc"><div class="ic"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 8h4l3-4.5h5M5 8l3 4.5h5M11.5 1.5l2 2-2 2M11.5 10.5l2 2-2 2"/></svg></div><h4>Load Balance PCC</h4><p>Balanceamento 50/50 entre os links com monitoramento Netwatch + Blackhole (1.1.1.2 e 1.0.0.1) e desativação automática de FastTrack.</p></a>
+    <a class="tool" href="#failover"><div class="ic"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 5h10.5L10 2.5M14 11H3.5L6 13.5"/></svg></div><h4>Failover (Passo 11 Notion)</h4><p>Cria apenas o monitoramento automático do Failover: Rota <code>9.9.9.9/32</code> + Rota Blackhole (Distance 254) + Netwatch (sem mexer nas rotas padrão).</p></a>
+    <a class="tool" href="#cake"><div class="ic"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1.5 14h13M4 11v3M8 6.5V14M12 2.5V14"/></svg></div><h4>Fila CAKE Simplificada</h4><p>Informe apenas a rede LAN e a velocidade do link. Calcula 90%, valida/desativa o FastTrack e cria a fila CAKE completa.</p></a>
+    <a class="tool" href="#portfwd"><div class="ic"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1.5 8h9M7.5 4.5 11 8l-3.5 3.5M14 2v12"/></svg></div><h4>Port Forward (DST-NAT)</h4><p>Direto ao ponto: informe apenas a interface WAN, nome, portas e IP interno.</p></a>
+  </div>
+</section>
+
+<!-- ================= CONFIG COMPLETA (NOTION) ================= -->
+<section class="page" id="page-full" data-gen="full">
+  <div class="crumbs">RouterOS v7<span>›</span>Provisionamento<span>›</span>Config Completa (Padrão Notion)</div>
+  <h1>Configuração Completa do Zero (Padrão Notion)</h1>
+  <p class="lead">Escolha o tipo de autenticação de cada link (<b>IP Estático</b>, <b>PPPoE</b> ou <b>DHCP Client</b>) e preencha os dados da unidade. O gerador monta todos os passos do manual do Notion na ordem exata.</p>
+  <div class="meta">
+    <span class="pill blue">Passos 2 a 17 do Notion</span>
+    <span class="pill green">IP Fixo · PPPoE · DHCP</span>
+    <span class="pill green">Failover + SNMPv3 + DDNS</span>
+  </div>
+
+  <!-- Links WAN -->
+  <div class="card"><h3>1. Links WAN (Passos 2, 7, 8, 9 e 10)</h3>
+    <div class="body">
+      <!-- WAN 1 -->
+      <div class="wan-box">
+        <h4>WAN 1 (Link Principal — Distance 1 · comment="WAN1")</h4>
+        <div class="grid">
+          <label class="f">Porta Física<input type="text" id="fl-w1-port" value="ether1" spellcheck="false"><span class="hint">Porta física original (ex.: <code>ether1</code>).</span></label>
+          <label class="f">Nome da Operadora<input type="text" id="fl-w1-name" value="Vivo" spellcheck="false"><span class="hint">Renomeia para <code>ether1-Vivo</code>.</span></label>
+          <label class="f">Tipo de Autenticação
+            <select id="fl-w1-type">
+              <option value="static">IP Estático (Passo 9)</option>
+              <option value="dhcp" selected>DHCP Client / Dinâmico (Passo 7)</option>
+              <option value="pppoe">PPPoE Client (Passo 8)</option>
+            </select>
+          </label>
+        </div>
+        <div class="grid" id="fl-w1-fields" style="margin-top:12px">
+          <label class="f" data-show="static">IP com Barramento (CIDR)<input type="text" id="fl-w1-ip" value="186.224.202.41/30" spellcheck="false"><span class="hint">Ex.: <code>186.224.202.41/30</code></span></label>
+          <label class="f" data-show="static,dhcp">Gateway da WAN 1<input type="text" id="fl-w1-gw" value="192.168.15.1" spellcheck="false"><span class="hint">Ex.: <code>192.168.15.1</code> ou IP da operadora.</span></label>
+          <label class="f" data-show="pppoe">Interface PPPoE<input type="text" id="fl-w1-pppoe" value="pppoe-out1" spellcheck="false"><span class="hint">Vai para a lista WAN e rota WAN1.</span></label>
+          <label class="f" data-show="pppoe">Usuário PPPoE<input type="text" id="fl-w1-user" value="cliente@cliente" spellcheck="false"></label>
+          <label class="f" data-show="pppoe">Senha PPPoE<input type="text" id="fl-w1-pass" value="cliente" spellcheck="false"></label>
+        </div>
+      </div>
+
+      <!-- WAN 2 -->
+      <div class="wan-box">
+        <h4>WAN 2 (Link Backup — Distance 2 · comment="WAN2")</h4>
+        <div class="grid">
+          <label class="f">Porta Física<input type="text" id="fl-w2-port" value="ether2" spellcheck="false"><span class="hint">Porta física original (ex.: <code>ether2</code>).</span></label>
+          <label class="f">Nome da Operadora<input type="text" id="fl-w2-name" value="Claro" spellcheck="false"><span class="hint">Renomeia para <code>ether2-Claro</code>.</span></label>
+          <label class="f">Tipo de Autenticação
+            <select id="fl-w2-type">
+              <option value="dhcp" selected>DHCP Client / Dinâmico (Passo 7)</option>
+              <option value="static">IP Estático (Passo 9)</option>
+              <option value="pppoe">PPPoE Client (Passo 8)</option>
+              <option value="none">Sem WAN 2 (Apenas 1 Link)</option>
+            </select>
+          </label>
+        </div>
+        <div class="grid" id="fl-w2-fields" style="margin-top:12px">
+          <label class="f" data-show="static">IP com Barramento (CIDR)<input type="text" id="fl-w2-ip" value="192.168.0.130/24" spellcheck="false"></label>
+          <label class="f" data-show="static,dhcp">Gateway da WAN 2<input type="text" id="fl-w2-gw" value="192.168.0.1" spellcheck="false"><span class="hint">Usado na rota WAN2 e na tabela <code>monitor_backup</code>.</span></label>
+          <label class="f" data-show="pppoe">Interface PPPoE<input type="text" id="fl-w2-pppoe" value="pppoe-out2" spellcheck="false"></label>
+          <label class="f" data-show="pppoe">Usuário PPPoE<input type="text" id="fl-w2-user" value="cliente@cliente" spellcheck="false"></label>
+          <label class="f" data-show="pppoe">Senha PPPoE<input type="text" id="fl-w2-pass" value="cliente" spellcheck="false"></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LAN, DHCP e DNS -->
+  <div class="card"><h3>2. Rede LAN, DNS e DHCP (Passos 3, 4 e 5)</h3>
+    <div class="body"><div class="grid">
+      <label class="f">Portas da Bridge LAN<input type="text" id="fl-lan-ports" value="ether3,ether4,ether5" spellcheck="false"><span class="hint">Renomeadas para <code>etherX-LAN</code> e adicionadas à <code>bridge-lan</code>.</span></label>
+      <label class="f">IP da Bridge LAN (CIDR)<input type="text" id="fl-lan-ip" value="192.168.8.1/22" spellcheck="false"><span class="hint">Padrão Notion: <code>192.168.8.1/22</code></span></label>
+      <label class="f">Rede DHCP (CIDR)<input type="text" id="fl-lan-net" value="192.168.8.0/22" spellcheck="false"><span class="hint">Padrão Notion: <code>192.168.8.0/22</code></span></label>
+      <label class="f">Faixa do Pool DHCP<input type="text" id="fl-lan-pool" value="192.168.8.50-192.168.11.254" spellcheck="false"><span class="hint">Padrão Notion: <code>192.168.8.50-192.168.11.254</code></span></label>
+      <label class="f">Lease Time DHCP<input type="text" id="fl-lan-lease" value="00:10:00" spellcheck="false"><span class="hint">Padrão Notion: <code>00:10:00</code> (10 min).</span></label>
+      <label class="f">Servidores DNS<input type="text" id="fl-dns" value="8.8.8.8,8.8.4.4" spellcheck="false"><span class="hint">Padrão Notion: <code>8.8.8.8,8.8.4.4</code></span></label>
+    </div></div>
+  </div>
+
+  <!-- Failover, Serviços, SNMP e DDNS -->
+  <div class="card"><h3>3. Identificação, Failover, Segurança, SNMP e DDNS (Passos 11, 12, 15, 16 e 17)</h3>
+    <div class="body">
+      <div class="chks" style="margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+        <label class="chk"><input type="checkbox" id="fl-chk-fo" checked><span>Incluir Failover Netwatch + Blackhole (Passo 11)<small>Monitora a WAN1 com rota /32 + Blackhole 254 + Netwatch.</small></span></label>
+        <label class="chk"><input type="checkbox" id="fl-chk-m2" checked><span>Incluir Monitoramento da WAN2 com Mangle (Passo 16)<small>Cria a tabela <code>monitor_backup</code> para pingar a WAN2.</small></span></label>
+        <label class="chk"><input type="checkbox" id="fl-chk-snmp" checked><span>Incluir Configuração SNMPv3 (Passo 15)<small>Desativa public e cria community privada SHA1/AES.</small></span></label>
+        <label class="chk"><input type="checkbox" id="fl-chk-ddns" checked><span>Incluir Script de DDNS No-IP (Passo 17)<small>Cria o script <code>ddns-noip</code> e o scheduler a cada 5 min.</small></span></label>
+      </div>
+      <div class="grid">
+        <label class="f">Nome da Unidade (Identity / Location)<input type="text" id="fl-ident" value="Living Otavio" spellcheck="false"><span class="hint">Define <code>/system identity</code> e Location do SNMP.</span></label>
+        <label class="f">Porta WebFig www (Passo 12)<input type="number" id="fl-www-port" value="8123" min="1" max="65535"><span class="hint">Padrão Notion: <code>8123</code> (desativa ssh, telnet, ftp, api).</span></label>
+        <label class="f" id="wrap-fo-ip">IP Monitor do Failover (Passo 11)<input type="text" id="fl-fo-ip" value="9.9.9.9" spellcheck="false"><span class="hint">Padrão Notion: <code>9.9.9.9</code> (com Blackhole 254 + Netwatch).</span></label>
+        <label class="f" id="wrap-snmp-comm">Community / Senha SNMPv3 (Passo 15)<input type="text" id="fl-snmp-comm" value="smartsigma88" spellcheck="false"><span class="hint">Ex.: <code>smartsigma88</code> (SHA1 + AES).</span></label>
+        <label class="f" id="wrap-ddns-host">Hostname DDNS No-IP (Passo 17)<input type="text" id="fl-ddns-host" value="vivazagua.ddns.net" placeholder="ex.: vivazagua.ddns.net" spellcheck="false"><span class="hint">Endereço No-IP da unidade.</span></label>
+        <label class="f" id="wrap-ddns-wan">Interface do DDNS (Passo 17)<select id="fl-ddns-wan"><option value="w1" selected>WAN 1 (Principal)</option><option value="w2">WAN 2 (Backup)</option></select><span class="hint">Interface de onde o script pega o IP público.</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="out-bar"><h2>Script gerado (Padrão Notion)</h2><div class="acts"><button class="btn ghost sm" data-copyall="full">Copiar tudo</button><button class="btn sm" data-dl="full">Baixar .rsc</button></div></div>
+  <div id="out-full"></div>
+</section>
+
+<!-- ================= PCC ================= -->
+<section class="page" id="page-pcc" data-gen="pcc">
+  <div class="crumbs">RouterOS v7<span>›</span>Roteamento<span>›</span>Load Balance PCC</div>
+  <h1>Load Balance PCC (com Netwatch + Blackhole)</h1>
+  <p class="lead">Divide as conexões entre os links WAN usando <code>both-addresses</code>, <b>valida e desativa o FastTrack automaticamente</b> e monitora cada link no padrão Smart Sigma: <b>Rota /32 + Rota Blackhole (Distance 254) + Netwatch</b> (desativa a rota principal do link se o ping para <code>1.1.1.2</code> ou <code>1.0.0.1</code> falhar).</p>
+  <div class="meta">
+    <span class="pill blue">/ip firewall mangle</span>
+    <span class="pill blue">/routing table (v7)</span>
+    <span class="pill green">Netwatch + Blackhole (1.1.1.2 / 1.0.0.1)</span>
+    <span class="pill green">Auto-Disable FastTrack</span>
+  </div>
+
+  <div class="card"><h3>1. Links WAN <span class="sub">Peso 1 e 1 = 50/50 · Cada link é monitorado pelo Netwatch com proteção Blackhole</span></h3>
+    <div class="body"><div id="rows-pcc"></div>
+      <div class="hint"><b>IP Monitor (Netwatch):</b> IP externo monitorado por aquele link com rota <code>/32</code> (distance 1) + rota <code>blackhole</code> (distance 254). Quando o IP para de responder, o Netwatch desativa a rota principal daquele link e o backup assume.</div>
+    </div>
+  </div>
+
+  <div class="card"><h3>2. Rede Local (LAN e VPNs)</h3><div class="body"><div class="grid">
+    <label class="f">Interface LAN (entrada do tráfego)<input type="text" id="pcc-lan" value="bridge-lan" spellcheck="false"><span class="hint">Interface ou bridge da rede interna.</span></label>
+    <label class="f full">Redes internas (Bypass — não passam pelo balanceamento, uma por linha)
+      <textarea id="pcc-locals" spellcheck="false">192.168.8.0/22 LAN
+10.90.0.0/24 VPN WireGuard</textarea>
+      <span class="hint">Inclua sua LAN e redes de VPN (ex.: WireGuard).</span></label>
+  </div></div></div>
+
+  <div class="out-bar"><h2>Script gerado</h2><div class="acts"><button class="btn ghost sm" data-copyall="pcc">Copiar tudo</button><button class="btn sm" data-dl="pcc">Baixar .rsc</button></div></div>
+  <div id="out-pcc"></div>
+</section>
+
+<!-- ================= FAILOVER (PASSO 11) ================= -->
+<section class="page" id="page-failover" data-gen="failover">
+  <div class="crumbs">RouterOS v7<span>›</span>Roteamento<span>›</span>Failover (Passo 11 Notion)</div>
+  <h1>Failover (Passo 11 do Notion — Netwatch + Blackhole)</h1>
+  <p class="lead">Gera <b>somente</b> a configuração de Failover do <b>Passo 11</b> (Rota de Monitoramento <code>/32</code> + Rota Blackhole com Distance 254 + Netwatch), assumindo que suas rotas padrão <code>WAN1</code> e <code>WAN2</code> já existem na tabela de rotas.</p>
+  <div class="meta">
+    <span class="pill blue">Passo 11 do Notion</span>
+    <span class="pill green">Rota /32 + Blackhole (Dist 254)</span>
+    <span class="pill green">Netwatch (10s / 1000ms)</span>
+  </div>
+
+  <div class="card"><h3>Parâmetros do Failover (Monitoramento da WAN1)</h3><div class="body"><div class="grid">
+    <label class="f">Gateway ou Interface da WAN1<input type="text" id="fo-gw1" value="200.170.246.153" spellcheck="false"><span class="hint">Ex.: <code>200.170.246.153</code>, <code>192.168.15.1</code> ou <code>pppoe-out1</code>.</span></label>
+    <label class="f">IP de Teste (Netwatch / Blackhole)<input type="text" id="fo-host" value="9.9.9.9" spellcheck="false"><span class="hint">Padrão Notion: <code>9.9.9.9</code></span></label>
+    <label class="f">Comentário da Rota Principal<input type="text" id="fo-comment" value="WAN1" spellcheck="false"><span class="hint">Comentário exato da rota 0.0.0.0/0 principal que o Netwatch vai ativar/desativar (padrão: <code>WAN1</code>).</span></label>
+  </div></div></div>
+
+  <div class="out-bar"><h2>Script gerado</h2><div class="acts"><button class="btn ghost sm" data-copyall="failover">Copiar tudo</button><button class="btn sm" data-dl="failover">Baixar .rsc</button></div></div>
+  <div id="out-failover"></div>
+</section>
+
+<!-- ================= CAKE ================= -->
+<section class="page" id="page-cake" data-gen="cake">
+  <div class="crumbs">RouterOS v7<span>›</span>QoS<span>›</span>Fila CAKE</div>
+  <h1>Fila CAKE (Anti-Estouro de Banda)</h1>
+  <p class="lead">Preencha apenas a rede LAN e a velocidade contratada do link. O gerador calcula automaticamente a margem de <b>90%</b> (necessária para segurar a fila no MikroTik), configura divisão justa por IP (<code>dual-srchost</code> / <code>dual-dsthost</code>) e <b>valida/desativa o FastTrack automaticamente</b>.</p>
+  <div class="meta">
+    <span class="pill blue">/queue type</span>
+    <span class="pill blue">/queue simple</span>
+    <span class="pill green">Auto-Disable FastTrack</span>
+    <span class="pill">Limite automático em 90%</span>
+  </div>
+
+  <div class="card"><h3>1. Rede Local</h3><div class="body">
+    <div class="grid">
+      <label class="f">Rede LAN (Target)<input type="text" id="ck-targets" value="192.168.8.0/22" spellcheck="false"><span class="hint">Ex.: <code>192.168.8.0/22</code> (se tiver mais de uma, separe por vírgula).</span></label>
+    </div>
+  </div></div>
+
+  <div class="card"><h3>2. Links WAN <span class="sub">Informe a velocidade contratada real em Mbps</span></h3><div class="body"><div id="rows-cake"></div>
+    <div class="hint">O script aplicará 90% da velocidade informada (ex.: 100 Mbps contratados → limite de <code>90M</code>) e priorizará pacotes sensíveis a latência.</div>
+  </div></div>
+
+  <div class="out-bar"><h2>Script gerado</h2><div class="acts"><button class="btn ghost sm" data-copyall="cake">Copiar tudo</button><button class="btn sm" data-dl="cake">Baixar .rsc</button></div></div>
+  <div id="out-cake"></div>
+</section>
+
+<!-- ================= PORT FORWARD ================= -->
+<section class="page" id="page-portfwd" data-gen="portfwd">
+  <div class="crumbs">RouterOS v7<span>›</span>Firewall<span>›</span>NAT<span>›</span>Port Forward</div>
+  <h1>Port Forward (DST-NAT Simplificado)</h1>
+  <p class="lead">Redirecionamento direto de portas externas da interface WAN para servidores ou equipamentos da rede interna.</p>
+  <div class="meta"><span class="pill blue">/ip firewall nat</span><span class="pill">dst-nat</span></div>
+
+  <div class="card"><h3>1. Interface de Entrada</h3><div class="body"><div class="grid">
+    <label class="f">Interface WAN (Ether WAN)<input type="text" id="pf-in" value="ether1-TELIUM" spellcheck="false"><span class="hint">Interface por onde entra a conexão externa (ex.: <code>ether1-TELIUM</code>).</span></label>
+  </div></div></div>
+
+  <div class="card"><h3>2. Portas a Redirecionar</h3><div class="body"><div id="rows-portfwd"></div>
+    <div class="hint">Você pode informar uma porta única (<code>3389</code>) ou faixa (<code>5000-5010</code>). Se a porta interna for igual à externa, pode repetir ou deixar em branco.</div>
+  </div></div>
+
+  <div class="out-bar"><h2>Script gerado</h2><div class="acts"><button class="btn ghost sm" data-copyall="portfwd">Copiar tudo</button><button class="btn sm" data-dl="portfwd">Baixar .rsc</button></div></div>
+  <div id="out-portfwd"></div>
+</section>
+
+<footer>Smart Sigma · RouterOS v7 Script Generator</footer>
+</main>
+</div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ============================================================
+ *  Utilitários
+ * ============================================================ */
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function clean(s){return String(s==null?'':s).trim();}
+function ascii(s){
+  return String(s==null?'':s)
+    .replace(/[áàãâä]/g,'a').replace(/[ÁÀÃÂÄ]/g,'A')
+    .replace(/[éèêë]/g,'e').replace(/[ÉÈÊË]/g,'E')
+    .replace(/[íìîï]/g,'i').replace(/[ÍÌÎÏ]/g,'I')
+    .replace(/[óòõôö]/g,'o').replace(/[ÓÒÕÔÖ]/g,'O')
+    .replace(/[úùûü]/g,'u').replace(/[ÚÙÛÜ]/g,'U')
+    .replace(/ç/g,'c').replace(/Ç/g,'C')
+    .replace(/[—–]/g,'-').replace(/[ºª]/g,'o')
+    .replace(/[^\x09\x0A\x0D\x20-\x7E]/g,'');
+}
+function q(s){return '"'+ascii(s).replace(/"/g,"'").replace(/[\\$]/g,'')+'"';}
+var V={
+  ip:function(s){var m=/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(s);return !!m&&m.slice(1).every(function(n){return +n<=255&&String(+n)===n;});},
+  cidr:function(s){var p=String(s).split('/');return p.length===2&&V.ip(p[0])&&/^\d{1,2}$/.test(p[1])&&+p[1]<=32;},
+  net:function(s){return V.ip(s)||V.cidr(s);},
+  ifname:function(s){return /^[A-Za-z0-9][A-Za-z0-9_.\-]{0,62}$/.test(s);},
+  label:function(s){return /^[A-Za-z0-9_]{1,24}$/.test(s);},
+  port:function(s){var m=/^(\d{1,5})(?:-(\d{1,5}))?$/.exec(s);if(!m)return false;var a=+m[1],b=m[2]?+m[2]:a;return a>=1&&b<=65535&&a<=b;}
+};
+function isPrivate(ip){var p=ip.split('.').map(Number);return p[0]===10||(p[0]===172&&p[1]>=16&&p[1]<=31)||(p[0]===192&&p[1]===168)||(p[0]===100&&p[1]>=64&&p[1]<=127);}
+function parseNets(text,E,what){
+  var out=[];
+  String(text||'').split(/\r?\n/).forEach(function(ln,i){
+    ln=ln.trim(); if(!ln||ln.charAt(0)==='#')return;
+    var parts=ln.split(/\s+/), net=parts[0], cm=parts.slice(1).join(' ');
+    if(!V.net(net)) E.push(what+', linha '+(i+1)+': "'+net+'" não é um IPv4/CIDR válido.');
+    else out.push({net:net,comment:cm});
+  });
+  return out;
+}
+function rate(mbps,pct){var x=mbps*pct/100;return x>=1?Math.floor(x)+'M':Math.max(1,Math.floor(x*1000))+'k';}
+
+/* ============================================================
+ *  Gerador: CONFIG COMPLETA DO ZERO (Padrão Notion Passos 2 a 17)
+ * ============================================================ */
+function genFull(c){
+  var E=[],W=[],B=[];
+  var w1Port=clean(c.w1Port), w1Name=clean(c.w1Name), w1If=w1Port+'-'+w1Name;
+  var w2Port=clean(c.w2Port), w2Name=clean(c.w2Name), w2If=w2Port+'-'+w2Name;
+  var hasW2=c.w2Type!=='none';
+
+  if(!V.ifname(w1Port))E.push('WAN 1: Porta física inválida (ex.: ether1).');
+  if(!V.ifname(w1Name))E.push('WAN 1: Nome da operadora inválido (ex.: Vivo).');
+  if(c.w1Type==='static'){
+    if(!V.cidr(c.w1Ip))E.push('WAN 1: Informe o IP estático com barramento (ex.: 186.224.202.41/30).');
+    if(!V.ip(c.w1Gw))E.push('WAN 1: Informe o IP do Gateway.');
+  } else if(c.w1Type==='dhcp'){
+    if(!V.ip(c.w1Gw))E.push('WAN 1: Informe o Gateway da rota WAN1 (ex.: 192.168.15.1).');
+  } else if(c.w1Type==='pppoe'){
+    if(!V.ifname(c.w1Pppoe))E.push('WAN 1: Nome da interface PPPoE inválido (ex.: pppoe-out1).');
+    if(!clean(c.w1User))E.push('WAN 1: Informe o usuário PPPoE.');
+  }
+
+  if(hasW2){
+    if(!V.ifname(w2Port))E.push('WAN 2: Porta física inválida (ex.: ether2).');
+    if(!V.ifname(w2Name))E.push('WAN 2: Nome da operadora inválido (ex.: Claro).');
+    if(c.w2Type==='static'){
+      if(!V.cidr(c.w2Ip))E.push('WAN 2: Informe o IP estático com barramento (ex.: 192.168.0.130/24).');
+      if(!V.ip(c.w2Gw))E.push('WAN 2: Informe o IP do Gateway.');
+    } else if(c.w2Type==='dhcp'){
+      if(!V.ip(c.w2Gw))E.push('WAN 2: Informe o Gateway da rota WAN2 (ex.: 192.168.0.1).');
+    } else if(c.w2Type==='pppoe'){
+      if(!V.ifname(c.w2Pppoe))E.push('WAN 2: Nome da interface PPPoE inválido (ex.: pppoe-out2).');
+      if(!clean(c.w2User))E.push('WAN 2: Informe o usuário PPPoE.');
+    }
+  }
+
+  var lanPorts=clean(c.lanPorts).split(',').map(clean).filter(Boolean);
+  if(!lanPorts.length)E.push('Informe ao menos uma porta para a Bridge LAN (ex.: ether3,ether4,ether5).');
+  if(!V.cidr(c.lanIp))E.push('IP da Bridge LAN inválido (ex.: 192.168.8.1/22).');
+  if(!V.cidr(c.lanNet))E.push('Rede DHCP inválida (ex.: 192.168.8.0/22).');
+  if(c.chkFo&&hasW2&&!V.ip(c.foIp))E.push('IP Monitor do Failover inválido (ex.: 9.9.9.9).');
+  if(c.chkDdns&&!clean(c.ddnsHost))E.push('Informe o Hostname DDNS No-IP (ex.: vivazagua.ddns.net) ou desmarque a opção de DDNS.');
+
+  if(E.length)return {errors:E,warnings:W,blocks:[]};
+
+  var lanGw=c.lanIp.split('/')[0];
+  var w1WanListMember=(c.w1Type==='pppoe')?clean(c.w1Pppoe):w1If;
+  var w1RouteGw=(c.w1Type==='pppoe')?clean(c.w1Pppoe):clean(c.w1Gw);
+  var w2WanListMember=(c.w2Type==='pppoe')?clean(c.w2Pppoe):w2If;
+  var w2RouteGw=(c.w2Type==='pppoe')?clean(c.w2Pppoe):clean(c.w2Gw);
+
+  // Bloco 0: Passos 2, 7, 8, 9 e 10 (Identidade, Interfaces, Lista WAN + Membros WAN, Autenticacao WANs e Rotas WAN1/WAN2)
+  var b1=[
+    '# Identificacao do Roteador',
+    '/system identity set name='+q(clean(c.ident)||'MikroTik'),
+    '',
+    '# Passo 2 (Notion): Renomear Interfaces',
+    '/interface ethernet',
+    'set [find default-name='+w1Port+'] name='+q(w1If)
+  ];
+  if(hasW2) b1.push('set [find default-name='+w2Port+'] name='+q(w2If));
+  lanPorts.forEach(function(p){
+    b1.push('set [find default-name='+p+'] name='+q(p+'-LAN'));
+  });
+
+  b1.push('','# Configuracao da WAN 1 ('+w1If+' - '+c.w1Type.toUpperCase()+')');
+  if(c.w1Type==='static'){
+    b1.push('/ip address remove [find interface='+q(w1If)+']');
+    b1.push('/ip address add address='+clean(c.w1Ip)+' interface='+q(w1If)+' comment="WAN1 '+w1Name+'"');
+  } else if(c.w1Type==='dhcp'){
+    b1.push('/ip dhcp-client remove [find interface='+q(w1If)+']');
+    b1.push('/ip dhcp-client add interface='+q(w1If)+' use-peer-dns=no use-peer-ntp=no add-default-route=no disabled=no comment="WAN1 '+w1Name+'"');
+  } else if(c.w1Type==='pppoe'){
+    b1.push('/interface pppoe-client remove [find name='+q(clean(c.w1Pppoe))+']');
+    b1.push('/interface pppoe-client add name='+q(clean(c.w1Pppoe))+' interface='+q(w1If)+' user='+q(clean(c.w1User))+' password='+q(clean(c.w1Pass))+' use-peer-dns=no add-default-route=no disabled=no');
+  }
+
+  if(hasW2){
+    b1.push('','# Configuracao da WAN 2 ('+w2If+' - '+c.w2Type.toUpperCase()+')');
+    if(c.w2Type==='static'){
+      b1.push('/ip address remove [find interface='+q(w2If)+']');
+      b1.push('/ip address add address='+clean(c.w2Ip)+' interface='+q(w2If)+' comment="WAN2 '+w2Name+'"');
+    } else if(c.w2Type==='dhcp'){
+      b1.push('/ip dhcp-client remove [find interface='+q(w2If)+']');
+      b1.push('/ip dhcp-client add interface='+q(w2If)+' use-peer-dns=no use-peer-ntp=no add-default-route=no disabled=no comment="WAN2 '+w2Name+'"');
+    } else if(c.w2Type==='pppoe'){
+      b1.push('/interface pppoe-client remove [find name='+q(clean(c.w2Pppoe))+']');
+      b1.push('/interface pppoe-client add name='+q(clean(c.w2Pppoe))+' interface='+q(w2If)+' user='+q(clean(c.w2User))+' password='+q(clean(c.w2Pass))+' use-peer-dns=no add-default-route=no disabled=no');
+    }
+  }
+
+  b1.push(
+    '',
+    '# Passo 2 (Notion): Criar Lista WAN e adicionar as interfaces WAN nela',
+    ':if ([:len [/interface list find name=WAN]] = 0) do={/interface list add name=WAN}',
+    ':if ([:len [/interface list member find list=WAN interface='+q(w1WanListMember)+']] = 0) do={/interface list member add list=WAN interface='+q(w1WanListMember)+'}'
+  );
+  if(hasW2){
+    b1.push(':if ([:len [/interface list member find list=WAN interface='+q(w2WanListMember)+']] = 0) do={/interface list member add list=WAN interface='+q(w2WanListMember)+'}');
+  }
+
+  b1.push(
+    '',
+    '# Passo 10 (Notion): Configurar Rotas para WAN1 (Distance 1) e WAN2 (Distance 2)',
+    '/ip route remove [find comment="WAN1"]',
+    '/ip route remove [find comment="WAN2"]',
+    '/ip route add dst-address=0.0.0.0/0 gateway='+w1RouteGw+' distance=1 comment="WAN1"'
+  );
+  if(hasW2) b1.push('/ip route add dst-address=0.0.0.0/0 gateway='+w2RouteGw+' distance=2 comment="WAN2"');
+
+  B.push({impact:'low',title:'Passos 2, 7 a 10: Interfaces, Lista WAN, Autenticação dos Links e Rotas WAN1 / WAN2',desc:'Renomeia as portas, configura a autenticação de cada link, adiciona as interfaces na <code>Interface List WAN</code> e cria as rotas padrão <code>WAN1</code> e <code>WAN2</code> (antes de mexer na bridge para não derrubar o WinBox).',code:b1.join('\n'),expect:[
+    'Interfaces renomeadas e incluídas em <code>Interfaces > Interface List</code> como <code>WAN</code>.',
+    'Rotas <code>WAN1</code> (Distance 1)'+(hasW2?' e <code>WAN2</code> (Distance 2)':'')+' criadas em <code>IP > Routes</code>.']});
+
+  // Bloco 1: Passo 11 (Failover Netwatch + Blackhole) e Passo 16 (Monitoramento WAN2 Mangle)
+  if(hasW2&&(c.chkFo||c.chkM2)){
+    var b3=[];
+    if(c.chkFo){
+      b3.push(
+        '# Passo 11 (Notion): Configurar o Failover (Rota de Monitoramento + Blackhole 254 + Netwatch)',
+        '/ip route remove [find comment="Monitor-WAN1"]',
+        '/ip route remove [find comment="Blackhole-WAN1"]',
+        '/ip route add dst-address='+clean(c.foIp)+'/32 gateway='+w1RouteGw+' distance=1 comment="Monitor-WAN1"',
+        '/ip route add dst-address='+clean(c.foIp)+'/32 blackhole distance=254 comment="Blackhole-WAN1"',
+        '',
+        '/tool netwatch remove [find comment="Failover-WAN1"]',
+        '/tool netwatch add host='+clean(c.foIp)+' interval=10s timeout=1s comment="Failover-WAN1" up-script="/ip route enable [find comment=\\"WAN1\\"]" down-script="/ip route disable [find comment=\\"WAN1\\"]"'
+      );
+    }
+    if(c.chkM2){
+      if(b3.length)b3.push('');
+      b3.push(
+        '# Passo 16 (Notion - VERSION 7): Monitoramento da WAN2 com Mangle',
+        ':if ([:len [/routing table find name=monitor_backup]] = 0) do={/routing table add name=monitor_backup fib}',
+        '',
+        '/ip firewall mangle remove [find new-connection-mark=conn_monitor_backup]',
+        '/ip firewall mangle remove [find new-routing-mark=monitor_backup]',
+        '/ip firewall mangle add action=mark-connection chain=input in-interface='+q(w2WanListMember)+' new-connection-mark=conn_monitor_backup passthrough=yes',
+        '/ip firewall mangle add action=mark-routing chain=output connection-mark=conn_monitor_backup new-routing-mark=monitor_backup passthrough=no',
+        '',
+        '/ip route remove [find routing-table=monitor_backup]',
+        '/ip route add dst-address=0.0.0.0/0 gateway='+w2RouteGw+' routing-table=monitor_backup'
+      );
+    }
+    B.push({impact:'low',title:'Passos 11 e 16: Failover Automático (Netwatch + Blackhole) e Monitoramento da WAN2',desc:'Cria o monitoramento do link principal com proteção Blackhole (Distance 254) e a tabela <code>monitor_backup</code> para monitorar a WAN2 externamente.',code:b3.join('\n'),expect:[
+      c.chkFo?'Netwatch monitorando <code>'+clean(c.foIp)+'</code> a cada 10s.':'',
+      c.chkM2?'Tabela <code>monitor_backup</code> ativa para a WAN2.':'']});
+  }
+
+  // Bloco 2: Passos 12, 15 e 17 (Segurança de Acesso Remoto, SNMPv3 e DDNS)
+  var b4=[
+    '# Passo 12 (Notion): Configurar Seguranca de Acesso Remoto (Winbox + WWW na porta '+clean(c.wwwPort)+')',
+    '/ip service set [find name=winbox] disabled=no',
+    '/ip service set [find name=www] port='+clean(c.wwwPort)+' disabled=no',
+    '/ip service set [find name=telnet] disabled=yes',
+    '/ip service set [find name=ftp] disabled=yes',
+    '/ip service set [find name=ssh] disabled=yes',
+    '/ip service set [find name=www-ssl] disabled=yes',
+    '/ip service set [find name=api] disabled=yes',
+    '/ip service set [find name=api-ssl] disabled=yes'
+  ];
+  if(c.chkSnmp){
+    var comm=clean(c.snmpComm)||'smartsigma88';
+    b4.push(
+      '',
+      '# Passo 15 (Notion): Configurar SNMPv3 (Monitoramento PRTG / Zabbix)',
+      '/snmp community set [find name=public] disabled=yes',
+      '/snmp community remove [find name='+q(comm)+']',
+      '/snmp community add name='+q(comm)+' addresses=0.0.0.0/0 security=private read-access=yes authentication-protocol=SHA1 encryption-protocol=AES authentication-password='+q(comm)+' encryption-password='+q(comm),
+      '/snmp set enabled=yes contact="Smartsigma" location='+q(clean(c.ident)||'Unidade')+' trap-community='+q(comm)+' trap-version=3'
+    );
+  }
+  if(c.chkDdns&&clean(c.ddnsHost)){
+    var ddnsIf=(c.ddnsWan==='w2'&&hasW2)?w2WanListMember:w1WanListMember;
+    b4.push(
+      '',
+      '# Passo 17 (Notion): Cadastrar Script de DDNS (No-IP)',
+      '/system script remove [find name="ddns-noip"]',
+      '/system scheduler remove [find name="atualiza-ddns"]',
+      '/system script add name=ddns-noip policy=read,write,test,policy owner=admin source={',
+      '    :local iface '+q(ddnsIf),
+      '    :local ipcidr [/ip address get [find interface=$iface] address]',
+      '    :local ip [:pick $ipcidr 0 [:find $ipcidr "/"]]',
+      '    /tool fetch mode=http url="http://dynupdate.no-ip.com/nic/update?hostname='+clean(c.ddnsHost)+'&myip=$ip" user="sup0rt3s1gm2" password="l3tm3in29" keep-result=no',
+      '}',
+      '/system scheduler add interval=5m name=atualiza-ddns on-event=ddns-noip start-time=startup'
+    );
+  }
+  B.push({impact:'low',title:'Passos 12, 15 e 17: Segurança (IP > Services), SNMPv3 e DDNS',desc:'Habilita apenas WinBox e WWW (porta '+clean(c.wwwPort)+'), configura a community SNMPv3 privada e agenda o script de DDNS.',code:b4.join('\n'),expect:[
+    'Serviços inseguros (SSH, Telnet, FTP, API) desativados em <code>IP > Services</code>.',
+    c.chkSnmp?'SNMPv3 ativo com community <code>'+clean(c.snmpComm)+'</code>.':'',
+    (c.chkDdns&&clean(c.ddnsHost))?'Scheduler <code>atualiza-ddns</code> rodando a cada 5 minutos na interface <code>'+((c.ddnsWan==='w2'&&hasW2)?w2WanListMember:w1WanListMember)+'</code>.':'']});
+
+  // Bloco 3 (Final): Passos 3, 4, 5 e 6 (Bridge LAN, DNS, DHCP Server, NAT e Portas da Bridge em background)
+  var bLan=[
+    '# Passo 3 (Notion): Criar Bridge LAN e IP ('+c.lanIp+')',
+    ':if ([:len [/interface bridge find name=bridge-lan]] = 0) do={/interface bridge add name=bridge-lan}',
+    '/ip address remove [find interface=bridge-lan]',
+    '/ip address add address='+clean(c.lanIp)+' interface=bridge-lan comment="LAN"',
+    '',
+    '# Passo 4 (Notion): Configurar o DNS',
+    '/ip dns set servers='+clean(c.dns),
+    '',
+    '# Passo 5 (Notion): Configurar o Servidor DHCP na bridge-lan',
+    '/ip dhcp-server remove [find name=dhcp1]',
+    '/ip pool remove [find name=dhcp_pool0]',
+    '/ip dhcp-server network remove [find address='+q(clean(c.lanNet))+']',
+    '/ip pool add name=dhcp_pool0 ranges='+clean(c.lanPool),
+    '/ip dhcp-server add name=dhcp1 interface=bridge-lan address-pool=dhcp_pool0 lease-time='+clean(c.lanLease)+' disabled=no',
+    '/ip dhcp-server network add address='+clean(c.lanNet)+' gateway='+lanGw+' dns-server='+clean(c.dns),
+    '',
+    '# Passo 6 (Notion): Configurar o NAT (Masquerade na lista WAN)',
+    ':if ([:len [/ip firewall nat find chain=srcnat out-interface-list=WAN action=masquerade]] = 0) do={/ip firewall nat add chain=srcnat out-interface-list=WAN action=masquerade comment="Masquerade WAN"}',
+    '',
+    '# Adiciona as portas LAN na bridge-lan em background (:execute) para nao interromper o script caso o WinBox pisque',
+    ':execute {'
+  ];
+  lanPorts.forEach(function(p){
+    var pName=p+'-LAN';
+    bLan.push('    :if ([:len [/interface bridge port find interface='+q(pName)+']] = 0) do={/interface bridge port add bridge=bridge-lan interface='+q(pName)+'}');
+  });
+  bLan.push('}');
+  B.push({impact:'low',title:'Passos 3 a 6: Bridge LAN, DNS, DHCP Server e NAT (Bloco Final)',desc:'Colocado por último e com adição das portas via <code>:execute</code> em background: assim, quando a porta onde seu cabo está conectado entrar na <code>bridge-lan</code> e o WinBox piscar por 1 segundo, toda a configuração do roteador já terminou.',code:bLan.join('\n'),expect:[
+    'Bridge <code>bridge-lan</code> com IP <code>'+c.lanIp+'</code>, DHCP Server ativo e portas <code>-LAN</code> adicionadas à bridge.']});
+
+  var summary='<div class="card"><h3>Resumo da Implantação (Padrão Notion)</h3><div class="body"><table class="props"><tr><th>Item</th><th>Configuração</th><th>Detalhe</th></tr>'+
+    '<tr><td>WAN 1 (Principal)</td><td><code>'+w1If+'</code> ('+c.w1Type.toUpperCase()+')</td><td>Saída WAN: <code>'+w1WanListMember+'</code> · Gateway Rota WAN1: <code>'+w1RouteGw+'</code> (Dist 1)</td></tr>'+
+    (hasW2?'<tr><td>WAN 2 (Backup)</td><td><code>'+w2If+'</code> ('+c.w2Type.toUpperCase()+')</td><td>Saída WAN: <code>'+w2WanListMember+'</code> · Gateway Rota WAN2: <code>'+w2RouteGw+'</code> (Dist 2)</td></tr>':'')+
+    '<tr><td>Bridge LAN</td><td><code>bridge-lan</code> ('+c.lanIp+')</td><td>DHCP: <code>'+c.lanPool+'</code> (Lease '+c.lanLease+') · DNS: <code>'+c.dns+'</code></td></tr>'+
+    '<tr><td>Serviços & Extras</td><td>WWW: <code>'+c.wwwPort+'</code> + WinBox</td><td>Identity: <code>'+clean(c.ident)+'</code> · SNMP: <code>'+(c.chkSnmp?clean(c.snmpComm):'desativado')+'</code> · DDNS: <code>'+(c.chkDdns?clean(c.ddnsHost):'desativado')+'</code></td></tr></table></div></div>';
+  return {errors:E,warnings:W,blocks:B,summary:summary};
+}
+
+/* ============================================================
+ *  Gerador: LOAD BALANCE PCC (RouterOS v7 · Padrão Netwatch + Blackhole)
+ * ============================================================ */
+function genPCC(c){
+  var E=[],W=[],B=[],T='PCC';
+  var wans=c.wans.map(function(w){return {label:clean(w.label).toUpperCase(),iface:clean(w.iface),gw:clean(w.gw),weight:parseInt(w.weight,10),host:clean(w.host)};});
+  if(wans.length<2)E.push('O balanceamento exige pelo menos 2 links WAN.');
+  var sl={},si={},sh={};
+  wans.forEach(function(w,i){
+    var n='WAN '+(i+1);
+    if(!V.label(w.label))E.push(n+': nome inválido. Use letras, números e _ (ex.: TELIUM).');
+    else if(sl[w.label])E.push(n+': nome "'+w.label+'" repetido.');
+    sl[w.label]=1;
+    if(!V.ifname(w.iface))E.push(n+': nome de interface inválido.');
+    else if(si[w.iface])E.push(n+': interface "'+w.iface+'" repetida.');
+    si[w.iface]=1;
+    w.gwIp=V.ip(w.gw);
+    if(!w.gwIp&&!V.ifname(w.gw))E.push(n+': gateway deve ser um IPv4 (ex.: 192.168.0.1) ou interface (ex.: pppoe-out1).');
+    if(!(w.weight>=1&&w.weight<=16))E.push(n+': peso deve ser um inteiro de 1 a 16.');
+    if(!V.ip(w.host))E.push(n+': IP Monitor (Netwatch) deve ser um IPv4 público válido (ex.: 1.1.1.2).');
+    else if(isPrivate(w.host))E.push(n+': IP Monitor ('+w.host+') deve ser um IP público na internet.');
+    else if(sh[w.host])E.push(n+': IP Monitor "'+w.host+'" repetido. Cada WAN precisa monitorar um IP externo diferente.');
+    sh[w.host]=1;
+  });
+  var lan=clean(c.lan);
+  if(!V.ifname(lan))E.push('Interface LAN inválida.');
+  else if(si[lan])E.push('A interface LAN não pode ser uma das WANs.');
+  var locals=parseNets(c.locals,E,'Redes internas');
+  if(E.length)return {errors:E,warnings:W,blocks:[]};
+
+  var tbl=function(w){return 'to_'+w.label;}, mk=function(w){return 'conn_'+w.label;}, rMain=function(w){return 'PCC-MAIN-'+w.label;};
+  var cm=function(s){return q(T+' - '+s);}, rx=q('^'+T+'(-| - )'), LL='LOCAL_NETWORKS';
+  var total=wans.reduce(function(a,w){return a+w.weight;},0);
+  var ifs=wans.map(function(w){return w.iface;}).join(',');
+
+  // Bloco 0: Pré-checagem
+  var b0=['# Backup da configuração atual (arquivo em Files)','/export file=antes-pcc'];
+  wans.forEach(function(w){if(w.gwIp)b0.push('/ping '+w.gw+' count=3');});
+  b0.push('/ip firewall filter print where action=fasttrack-connection','/ip firewall nat print','/ip firewall mangle print');
+  B.push({impact:'check',title:'Pré-checagem e backup',desc:'Salva um backup antes de começar e verifica gateways, FastTrack, NAT e Mangle.',code:b0.join('\n'),expect:[
+    'Arquivo <code>antes-pcc.rsc</code> salvo em Files.',
+    'Os gateways respondem ao ping inicial.']});
+
+  // Bloco 1: FastTrack + Lista WAN + NAT
+  var b1=[
+    '# 1) Valida se existe regra de FastTrack ativa e desativa (FastTrack ignora Mangle e quebra PCC)',
+    ':if ([:len [/ip firewall filter find action=fasttrack-connection disabled=no]] > 0) do={',
+    '    /ip firewall filter disable [find action=fasttrack-connection disabled=no]',
+    '    :put "FastTrack detectado e desativado com sucesso."',
+    '} else={ :put "FastTrack ja estava desativado ou inexistente." }',
+    '',
+    '# 2) Garante que todas as interfaces WAN estejam na lista WAN (Passo 2 e 6 do Notion)'
+  ];
+  b1.push(':if ([:len [/interface list find name=WAN]] = 0) do={/interface list add name=WAN}');
+  wans.forEach(function(w){
+    b1.push(':if ([:len [/interface list member find list=WAN interface='+w.iface+']] = 0) do={/interface list member add list=WAN interface='+w.iface+' comment='+cm('WAN '+w.label)+'}');
+  });
+  b1.push(':if ([:len [/ip firewall nat find chain=srcnat action=masquerade]] = 0) do={/ip firewall nat add chain=srcnat out-interface-list=WAN action=masquerade comment='+cm('Masquerade WAN')+'}');
+  B.push({impact:'low',title:'Validação/Desativação do FastTrack e NAT',desc:'Verifica automaticamente se há FastTrack ativo (desativando-o se existir) e garante que todas as WANs estejam na interface-list WAN com Masquerade.',code:b1.join('\n'),expect:[
+    'Mensagem no terminal confirmando que o FastTrack foi desativado ou já não existia.',
+    'Ambas as interfaces WAN incluídas na lista WAN.']});
+
+  // Bloco 2: Tabelas FIB + Rotas PCC + Rotas de Monitoramento + Blackhole + Netwatch
+  var b2=['# 1) Tabelas de roteamento FIB (RouterOS v7)'];
+  wans.forEach(function(w){b2.push(':if ([:len [/routing table find name='+tbl(w)+']] = 0) do={/routing table add name='+tbl(w)+' fib}');});
+  b2.push('','/ip route','remove [find comment~'+rx+']');
+  b2.push('# 2) Rotas de cada tabela PCC (principal distance=1 e backup distance=2)');
+  wans.forEach(function(w){
+    b2.push('add dst-address=0.0.0.0/0 gateway='+w.gw+' routing-table='+tbl(w)+' distance=1 comment='+q(rMain(w)));
+    var d=2;
+    wans.forEach(function(o){
+      if(o!==w) b2.push('add dst-address=0.0.0.0/0 gateway='+o.gw+' routing-table='+tbl(w)+' distance='+(d++)+' comment='+cm(w.label+' backup via '+o.label));
+    });
+  });
+  b2.push('','# 3) Rotas de Monitoramento /32 (distance=1) + Rota Blackhole (distance=254) - Padrao Smart Sigma');
+  wans.forEach(function(w){
+    b2.push('add dst-address='+w.host+'/32 gateway='+w.gw+' distance=1 comment='+cm('Monitor '+w.label));
+    b2.push('add dst-address='+w.host+'/32 blackhole distance=254 comment='+cm('Blackhole '+w.label));
+  });
+  b2.push('','# 4) Netwatch (10s / 1000ms): desativa a rota principal do link se o IP externo parar de responder');
+  b2.push('/tool netwatch','remove [find comment~'+rx+']');
+  wans.forEach(function(w){
+    b2.push('add host='+w.host+' interval=10s timeout=1s comment='+cm('Netwatch '+w.label)+' up-script="/ip route enable [find comment=\\"'+rMain(w)+'\\"]" down-script="/ip route disable [find comment=\\"'+rMain(w)+'\\"]"');
+  });
+  b2.push('',':delay 2s','/ip route print where comment~'+rx,'/tool netwatch print where comment~'+rx);
+  B.push({impact:'none',title:'Tabelas FIB, Rotas, Blackhole (254) e Netwatch',desc:'Segue o padrão Smart Sigma: cria as tabelas FIB, as rotas de monitoramento <code>/32</code> com proteção <code>blackhole distance=254</code> e o Netwatch que desativa a rota do link em caso de queda da operadora.',code:b2.join('\n'),expect:[
+    'As rotas <code>PCC-MAIN-...</code> e <code>Monitor</code> aparecem ativas (flag <b>A</b>).',
+    'As rotas <code>Blackhole</code> ficam em espera com distância 254.',
+    'O <code>/tool netwatch print</code> mostra o status <b>up</b> para ambos os links.']});
+
+  // Bloco 3: Address-list
+  var b4=['/ip firewall address-list','remove [find comment~'+rx+']'];
+  locals.forEach(function(l){b4.push('add list='+LL+' address='+l.net+' comment='+cm(l.comment||'rede interna'));});
+  B.push({impact:'none',title:'Lista de redes internas (Bypass)',desc:'Garante que a comunicação interna da LAN e da VPN WireGuard não passe pelo balanceamento.',code:b4.join('\n'),expect:['<code>/ip firewall address-list print where list='+LL+'</code> lista a LAN e a VPN.']});
+
+  // Bloco 4: Mangle PCC
+  var m=['/ip firewall mangle','remove [find comment~'+rx+']'];
+  m.push('# 1) Entrada: conexões que entram por uma WAN respondem pela mesma WAN');
+  wans.forEach(function(w){m.push('add chain=prerouting in-interface='+w.iface+' connection-state=new connection-mark=no-mark action=mark-connection new-connection-mark='+mk(w)+' passthrough=yes comment='+cm('Entrada '+w.label));});
+  if(locals.length){
+    m.push('# 2) Bypass para redes internas e VPN');
+    m.push('add chain=prerouting dst-address-list='+LL+' action=accept comment='+cm('Bypass redes internas'));
+  }
+  m.push('# 3) Divisão PCC '+wans.map(function(w){return w.label+' '+Math.round(w.weight/total*100)+'%';}).join(' / '));
+  var idx=0;
+  wans.forEach(function(w){
+    for(var k=0;k<w.weight;k++){
+      m.push('add chain=prerouting in-interface='+lan+' dst-address-type=!local connection-state=new connection-mark=no-mark per-connection-classifier=both-addresses:'+total+'/'+idx+' action=mark-connection new-connection-mark='+mk(w)+' passthrough=yes comment='+cm(w.label+' '+(idx+1)+'/'+total));
+      idx++;
+    }
+  });
+  m.push('# 4) Marcação de rota para a LAN');
+  wans.forEach(function(w){m.push('add chain=prerouting in-interface='+lan+' connection-mark='+mk(w)+' action=mark-routing new-routing-mark='+tbl(w)+' passthrough=no comment='+cm('Rota '+w.label));});
+  m.push('# 5) Respostas do próprio roteador (acesso remoto, WinBox, VPN)');
+  wans.forEach(function(w){m.push('add chain=output connection-mark='+mk(w)+(locals.length?' dst-address-list=!'+LL:'')+' action=mark-routing new-routing-mark='+tbl(w)+' passthrough=no comment='+cm('Resposta roteador '+w.label));});
+  B.push({impact:'high',title:'Ativação do Load Balance PCC (Mangle)',desc:'Distribui as novas conexões entre os links. Usa <code>connection-state=new</code> e <code>both-addresses</code> para não derrubar conexões ativas nem quebrar sites de bancos.',code:m.join('\n'),expect:[
+    'Nenhum erro ao colar.',
+    'O tráfego começa a dividir entre os links nas interfaces WAN.']});
+
+  // Bloco 5: Validação
+  var v=['/ip firewall mangle print stats where comment~'+rx,'/tool netwatch print where comment~'+rx,'/interface monitor-traffic '+ifs+' once','/system resource print'];
+  B.push({impact:'check',title:'Validação (ainda em Safe Mode)',desc:'Verifique se os contadores estão subindo nos dois links antes de sair do Safe Mode com Ctrl+X.',code:v.join('\n'),expect:[
+    'Os contadores de bytes/packets sobem nas regras de ambos os links.',
+    'Ambas as interfaces WAN mostram tráfego em <code>monitor-traffic</code>.']});
+
+  // Rollback
+  var r=['/tool netwatch remove [find comment~'+rx+']','/ip firewall mangle remove [find comment~'+rx+']'];
+  wans.forEach(function(w){r.push('/ip firewall connection remove [find connection-mark='+mk(w)+']');});
+  r.push('/ip firewall address-list remove [find comment~'+rx+']','/ip route remove [find comment~'+rx+']');
+  wans.forEach(function(w){r.push('/routing table remove [find name='+tbl(w)+']');});
+  r.push('/ip firewall filter enable [find action=fasttrack-connection]');
+  B.push({impact:'rollback',title:'Rollback (Desfazer Load Balance)',desc:'Remove o Netwatch, regras de PCC, rotas, blackholes e tabelas FIB criadas.',code:r.join('\n'),expect:['Tudo volta para a rota principal original.']});
+
+  var pal=['linear-gradient(135deg,#0284c7,#2563eb)','linear-gradient(135deg,#e11d48,#be123c)','linear-gradient(135deg,#059669,#047857)','linear-gradient(135deg,#d97706,#b45309)'], cursor=0;
+  var rows=wans.map(function(w){var ix=[];for(var k=0;k<w.weight;k++)ix.push(total+'/'+(cursor++));return '<tr><td>'+w.label+'</td><td>'+w.iface+'</td><td>'+w.gw+'</td><td><code>'+w.host+'</code> (Netwatch + Blackhole 254)</td><td>'+tbl(w)+'</td><td>'+ix.join(', ')+'</td><td><b>'+Math.round(w.weight/total*1000)/10+'%</b></td></tr>';}).join('');
+  var summary='<div class="card"><h3>Resumo da distribuição e monitoramento</h3><div class="body"><div class="dist">'+wans.map(function(w,i){return '<div style="flex:'+w.weight+';background:'+pal[i]+'">'+w.label+' · '+Math.round(w.weight/total*100)+'%</div>';}).join('')+'</div>'+
+    '<table class="props"><tr><th>Link</th><th>Interface</th><th>Gateway</th><th>Netwatch + Blackhole</th><th>Tabela FIB</th><th>PCC</th><th>Proporção</th></tr>'+rows+'</table></div></div>';
+  return {errors:E,warnings:W,blocks:B,summary:summary};
+}
+
+/* ============================================================
+ *  Gerador: FAILOVER (Somente Passo 11 do Notion — sem recriar rotas padrão)
+ * ============================================================ */
+function genFailover(c){
+  var E=[],W=[],B=[];
+  var gw1=clean(c.gw1), host=clean(c.host), cmName=clean(c.comment)||'WAN1';
+  if(!V.ip(gw1)&&!V.ifname(gw1))E.push('Informe o Gateway (IP) ou interface (ex.: pppoe-out1) da WAN1.');
+  if(!V.ip(host))E.push('Informe o IP de teste do Netwatch (ex.: 9.9.9.9).');
+  else if(isPrivate(host))E.push('O IP de teste precisa ser um IP público na internet.');
+  if(!cmName)E.push('Informe o comentário da rota principal (ex.: WAN1).');
+  if(E.length)return {errors:E,warnings:W,blocks:[]};
+
+  var r=[
+    '# Passo 11 (Notion): Rota de Monitoramento + Rota Blackhole (Protecao Distance 254)',
+    '/ip route',
+    'remove [find comment="Monitor-WAN1"]',
+    'remove [find comment="Blackhole-WAN1"]',
+    'add dst-address='+host+'/32 gateway='+gw1+' distance=1 comment="Monitor-WAN1"',
+    'add dst-address='+host+'/32 blackhole distance=254 comment="Blackhole-WAN1"',
+    '',
+    '# Passo 11 (Notion): Netwatch (Interval 10s / Timeout 1000ms)',
+    '/tool netwatch',
+    'remove [find comment="Failover-WAN1"]',
+    'add host='+host+' interval=10s timeout=1s comment="Failover-WAN1" up-script="/ip route enable [find comment=\\"'+cmName+'\\"]" down-script="/ip route disable [find comment=\\"'+cmName+'\\"]"',
+    ':delay 2s',
+    '/tool netwatch print where comment="Failover-WAN1"'
+  ];
+  B.push({impact:'low',title:'Passo 11 (Notion): Configurar o Failover (Monitoramento Automático)',desc:'Cria exclusivamente a rota de monitoramento <code>'+host+'/32</code>, a rota <code>blackhole</code> (Distance 254) e a regra do Netwatch que ativa/desativa a rota com comentário <code>'+cmName+'</code>.',code:r.join('\n'),expect:[
+    'Rota <code>Monitor-WAN1</code> ativa (flag <b>As</b>) e <code>Blackhole-WAN1</code> com distância 254.',
+    'Netwatch criado e com status <b>up</b>.']});
+
+  var rb=[
+    '/tool netwatch remove [find comment="Failover-WAN1"]',
+    '/ip route remove [find comment="Monitor-WAN1"]',
+    '/ip route remove [find comment="Blackhole-WAN1"]',
+    '/ip route enable [find comment='+q(cmName)+']'
+  ];
+  B.push({impact:'rollback',title:'Rollback (Remover Failover)',desc:'Remove o Netwatch e as rotas de monitoramento/blackhole, garantindo que a rota '+cmName+' fique ativa.',code:rb.join('\n'),expect:['Monitoramento removido.']});
+
+  return {errors:E,warnings:W,blocks:B};
+}
+
+/* ============================================================
+ *  Gerador: CAKE SIMPLIFICADO (RouterOS v7 · Auto FastTrack Disable)
+ * ============================================================ */
+function genCake(c){
+  var E=[],W=[],B=[],T='CAKE',pct=90;
+  var targets=parseNets(String(c.targets||'').replace(/[,;]+/g,'\n'),E,'Rede LAN');
+  if(!targets.length)E.push('Informe a rede LAN (ex.: 192.168.8.0/22).');
+  var links=c.links.map(function(l){return {label:clean(l.label).toUpperCase(),iface:clean(l.iface),down:parseFloat(String(l.down).replace(',','.')),up:parseFloat(String(l.up).replace(',','.'))};});
+  if(!links.length)E.push('Informe ao menos um link.');
+  var sl={};
+  links.forEach(function(l,i){
+    var n='Link '+(i+1);
+    if(!V.label(l.label))E.push(n+': nome inválido.');else if(sl[l.label])E.push(n+': nome repetido.');sl[l.label]=1;
+    if(!V.ifname(l.iface))E.push(n+': interface inválida.');
+    if(!(l.down>0&&l.down<=100000))E.push(n+': download inválido (Mbps).');
+    if(!(l.up>0&&l.up<=100000))E.push(n+': upload inválido (Mbps).');
+  });
+  if(E.length)return {errors:E,warnings:W,blocks:[]};
+  var tgt=targets.map(function(t){return t.net;}).join(','), rx=q('^'+T+' - ');
+
+  var code=[
+    '# 1) Valida se existe regra de FastTrack ativa e desativa (com FastTrack ativo a fila CAKE nao funciona)',
+    ':if ([:len [/ip firewall filter find action=fasttrack-connection disabled=no]] > 0) do={',
+    '    /ip firewall filter disable [find action=fasttrack-connection disabled=no]',
+    '    :put "FastTrack detectado e desativado para a fila CAKE funcionar."',
+    '} else={ :put "FastTrack OK (inexistente ou ja desativado)." }',
+    '',
+    '# 2) Cria os tipos de fila CAKE (divisao justa por IP da LAN + priorizacao de voz/video + filtro ACK)',
+    ':if ([:len [/queue type find name=cake-up]] = 0) do={/queue type add name=cake-up kind=cake}',
+    '/queue type set [find name=cake-up] kind=cake cake-diffserv=diffserv4 cake-flowmode=dual-srchost cake-nat=yes cake-ack-filter=filter',
+    ':if ([:len [/queue type find name=cake-down]] = 0) do={/queue type add name=cake-down kind=cake}',
+    '/queue type set [find name=cake-down] kind=cake cake-diffserv=diffserv4 cake-flowmode=dual-dsthost cake-nat=yes cake-ack-filter=none',
+    '',
+    '# 3) Cria a fila aplicando 90% da banda contratada (para eliminar bufferbloat e estouro de banda)',
+    '/queue simple remove [find comment~'+rx+']'
+  ];
+  links.forEach(function(l){
+    var name=T+'-'+l.label, up=rate(l.up,pct), dn=rate(l.down,pct);
+    code.push('/queue simple add name='+q(name)+' target='+tgt+' dst='+l.iface+' max-limit='+up+'/'+dn+' queue=cake-up/cake-down comment='+q(T+' - '+l.label));
+  });
+  code.push('','/queue simple print stats where comment~'+rx);
+
+  B.push({impact:'low',title:'Validar FastTrack e Criar Fila CAKE',desc:'Tudo em um único bloco: verifica e desativa o FastTrack automaticamente, cria o perfil CAKE otimizado e ativa o controle de banda em 90% do link.',code:code.join('\n'),expect:[
+    'Mensagem confirmando a verificação do FastTrack.',
+    'A fila aparece criada e com os contadores de <code>bytes</code> e <code>packets</code> subindo.']});
+
+  var r=['/queue simple remove [find comment~'+rx+']','/queue type remove [find name="cake-up"]','/queue type remove [find name="cake-down"]','/ip firewall filter enable [find action=fasttrack-connection]'];
+  B.push({impact:'rollback',title:'Rollback (Remover Fila CAKE)',desc:'Remove a fila CAKE e os tipos criados.',code:r.join('\n'),expect:['Fila removida.']});
+
+  var summary='<div class="card"><h3>Resumo da Fila CAKE (90% do link)</h3><div class="body"><table class="props"><tr><th>Fila</th><th>Interface WAN</th><th>Contratado (Down / Up)</th><th>Limite Aplicado (Up / Down)</th><th>FastTrack</th></tr>'+
+    links.map(function(l){return '<tr><td>'+T+'-'+l.label+'</td><td>'+l.iface+'</td><td>'+l.down+' / '+l.up+' Mbps</td><td><b>'+rate(l.up,pct)+' / '+rate(l.down,pct)+'</b></td><td>Verificado e desativado automaticamente</td></tr>';}).join('')+'</table></div></div>';
+  return {errors:E,warnings:W,blocks:B,summary:summary};
+}
+
+/* ============================================================
+ *  Gerador: PORT FORWARD SIMPLIFICADO
+ * ============================================================ */
+function genPF(c){
+  var E=[],W=[],B=[],T='PORTFWD';
+  var inV=clean(c.inValue);
+  if(!V.ifname(inV))E.push('Informe a interface WAN (ex.: ether1-TELIUM).');
+  var rules=c.rules.map(function(r){return {label:clean(r.label).toUpperCase(),proto:r.proto,ext:clean(r.ext),ip:clean(r.ip),intp:clean(r.intp)};});
+  if(!rules.length)E.push('Adicione ao menos uma regra.');
+  rules.forEach(function(r,i){
+    var n='Regra '+(i+1);
+    if(!V.label(r.label))E.push(n+': informe um nome simples (letras, números e _).');
+    if(!V.port(r.ext))E.push(n+': porta externa inválida.');
+    if(!V.ip(r.ip))E.push(n+': IP interno inválido.');
+    if(r.intp&&!V.port(r.intp))E.push(n+': porta interna inválida.');
+  });
+  if(E.length)return {errors:E,warnings:W,blocks:[]};
+  var cm=function(s){return q(T+' - '+s);}, rx=q('^'+T+' - ');
+
+  var n=['/ip firewall nat'];
+  rules.forEach(function(r){
+    var protos=r.proto==='both'?['tcp','udp']:[r.proto];
+    var toPort=r.intp||r.ext;
+    protos.forEach(function(p){
+      n.push('add chain=dstnat in-interface='+inV+' protocol='+p+' dst-port='+r.ext+' action=dst-nat to-addresses='+r.ip+' to-ports='+toPort+' comment='+cm(r.label+' '+p.toUpperCase()));
+    });
+  });
+  n.push('','/ip firewall nat print where comment~'+rx);
+  B.push({impact:'low',title:'Aplicar Redirecionamento de Portas (DST-NAT)',desc:'Cria as regras de redirecionamento entrando pela interface <code>'+inV+'</code>.',code:n.join('\n'),expect:['Regras criadas e listadas no terminal.']});
+
+  B.push({impact:'rollback',title:'Rollback (Remover Port Forwards)',code:'/ip firewall nat remove [find comment~'+rx+']',desc:'Remove os redirecionamentos criados.',expect:['Portas fechadas novamente.']});
+
+  var summary='<div class="card"><h3>Resumo das Portas</h3><div class="body"><table class="props"><tr><th>Nome</th><th>Interface WAN</th><th>Protocolo</th><th>Porta Externa</th><th>IP Interno : Porta Interna</th></tr>'+
+    rules.map(function(r){return '<tr><td>'+r.label+'</td><td>'+inV+'</td><td>'+(r.proto==='both'?'TCP + UDP':r.proto.toUpperCase())+'</td><td>'+r.ext+'</td><td><b>'+r.ip+':'+(r.intp||r.ext)+'</b></td></tr>';}).join('')+'</table></div></div>';
+  return {errors:E,warnings:W,blocks:B,summary:summary};
+}
+
+/* ============================================================
+ *  Highlight RouterOS
+ * ============================================================ */
+var KW={add:1,set:1,remove:1,print:1,find:1,'do':1,'else':1,disable:1,enable:1,where:1,once:1,stats:1,move:1,'count-only':1,fib:1,blackhole:1};
+function hlVal(v){if(!v)return '';if(v.charAt(0)==='"')return '<span class="s">'+esc(v)+'</span>';return '<span class="v">'+esc(v)+'</span>';}
+function hl(code){
+  return code.split('\n').map(function(line){
+    if(/^\s*#/.test(line))return '<span class="c">'+esc(line)+'</span>';
+    var toks=line.match(/"(?:[^"\\]|\\.)*"|\s+|[\[\]{}()]|[^\s\[\]{}()"]+/g)||[];
+    var out='',path=false;
+    toks.forEach(function(t){
+      if(/^\s+$/.test(t)){out+=t;return;}
+      if(t.charAt(0)==='"'){out+='<span class="s">'+esc(t)+'</span>';return;}
+      if(/^[\[\]{}()]$/.test(t)){out+='<span class="b">'+esc(t)+'</span>';path=false;return;}
+      if(t.charAt(0)===':'){out+='<span class="k">'+esc(t)+'</span>';path=false;return;}
+      if(t.charAt(0)==='/'){out+='<span class="p">'+esc(t)+'</span>';path=true;return;}
+      var m=/^([A-Za-z0-9!_.\-]+)([=~])(.*)$/.exec(t);
+      if(m){path=false;out+='<span class="a">'+esc(m[1])+'</span><span class="o">'+m[2]+'</span>'+hlVal(m[3]);return;}
+      if(KW[t]){path=false;out+='<span class="k">'+esc(t)+'</span>';return;}
+      if(path){out+='<span class="p">'+esc(t)+'</span>';return;}
+      out+=esc(t);
+    });
+    return out;
+  }).join('\n');
+}
+
+/* ============================================================
+ *  UI (Exclusivo RouterOS v7)
+ * ============================================================ */
+(function(){
+  var LAST={};
+  var $=function(s){return document.querySelector(s);};
+  var TITLES={full:'Config Completa (Padrão Notion)',pcc:'Load Balance PCC (Netwatch + Blackhole)',failover:'Failover (Passo 11 Notion)',cake:'Fila CAKE',portfwd:'Port Forward (DST-NAT)'};
+
+  var ROWS={
+    pcc:{min:2,max:4,cols:[
+      {k:'label',h:'Nome',ph:'TELIUM',w:'16%'},
+      {k:'iface',h:'Interface WAN',ph:'ether1-TELIUM',w:'24%'},
+      {k:'gw',h:'Gateway',ph:'200.170.246.153',w:'22%'},
+      {k:'host',h:'IP Monitor (Netwatch)',ph:'1.1.1.2',w:'22%'},
+      {k:'weight',h:'Peso',type:'number',min:1,max:16,w:'10%'}],
+      data:[
+        {label:'TELIUM',iface:'ether1-TELIUM',gw:'200.170.246.153',host:'1.1.1.2',weight:1},
+        {label:'CLARO',iface:'ether2-CLARO',gw:'192.168.0.1',host:'1.0.0.1',weight:1}
+      ],
+      blank:{label:'',iface:'',gw:'',host:'9.9.9.9',weight:1}},
+    cake:{min:1,max:4,cols:[
+      {k:'label',h:'Nome do Link',ph:'TELIUM',w:'22%'},
+      {k:'iface',h:'Interface WAN',ph:'ether1-TELIUM',w:'30%'},
+      {k:'down',h:'Download (Mbps)',type:'number',min:1,max:100000,w:'20%'},
+      {k:'up',h:'Upload (Mbps)',type:'number',min:1,max:100000,w:'20%'}],
+      data:[{label:'TELIUM',iface:'ether1-TELIUM',down:100,up:100}],
+      blank:{label:'',iface:'',down:100,up:100}},
+    portfwd:{min:1,max:30,cols:[
+      {k:'label',h:'Nome',ph:'SERVIDOR',w:'20%'},
+      {k:'proto',h:'Protocolo',type:'select',opts:[['tcp','TCP'],['udp','UDP'],['both','TCP+UDP']],w:'16%'},
+      {k:'ext',h:'Porta Externa',ph:'8080',w:'18%'},
+      {k:'ip',h:'IP Interno',ph:'192.168.8.10',w:'24%'},
+      {k:'intp',h:'Porta Interna',ph:'80',w:'16%'}],
+      data:[{label:'SERVIDOR',proto:'tcp',ext:'8080',ip:'192.168.8.10',intp:'80'}],
+      blank:{label:'',proto:'tcp',ext:'',ip:'',intp:''}}
+  };
+
+  function renderRows(key){
+    var R=ROWS[key], host=document.getElementById('rows-'+key);
+    var h='<table class="rows"><thead><tr><th class="n">#</th>'+R.cols.map(function(c){return '<th style="width:'+(c.w||'auto')+'">'+c.h+'</th>';}).join('')+'<th class="x"></th></tr></thead><tbody>';
+    R.data.forEach(function(row,i){
+      h+='<tr><td class="n">'+(i+1)+'</td>';
+      R.cols.forEach(function(c){
+        var v=row[c.k]==null?'':row[c.k];
+        if(c.type==='select')h+='<td><select data-k="'+c.k+'">'+c.opts.map(function(o){return '<option value="'+o[0]+'"'+(String(o[0])===String(v)?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></td>';
+        else h+='<td><input type="'+(c.type||'text')+'" data-k="'+c.k+'" value="'+esc(v)+'" placeholder="'+esc(c.ph||'')+'"'+(c.type==='number'?' min="'+c.min+'" max="'+c.max+'"':'')+' spellcheck="false" autocomplete="off"></td>';
+      });
+      h+='<td class="x"><button type="button" class="icon-btn" data-del="'+i+'" title="Remover linha"'+(R.data.length<=R.min?' disabled':'')+'>✕</button></td></tr>';
+    });
+    h+='</tbody></table>';
+    if(R.max>R.min) h+='<button type="button" class="btn ghost sm" data-add="1"'+(R.data.length>=R.max?' disabled':'')+'>+ Adicionar linha</button>';
+    host.innerHTML=h;
+  }
+  function syncRows(key){
+    var R=ROWS[key], host=document.getElementById('rows-'+key);
+    host.querySelectorAll('tbody tr').forEach(function(tr,i){tr.querySelectorAll('[data-k]').forEach(function(el){R.data[i][el.getAttribute('data-k')]=el.value;});});
+  }
+  Object.keys(ROWS).forEach(function(key){
+    renderRows(key);
+    document.getElementById('rows-'+key).addEventListener('click',function(ev){
+      var t=ev.target.closest('button');if(!t||t.disabled)return;
+      syncRows(key);
+      if(t.hasAttribute('data-add'))ROWS[key].data.push(JSON.parse(JSON.stringify(ROWS[key].blank)));
+      else if(t.hasAttribute('data-del'))ROWS[key].data.splice(+t.getAttribute('data-del'),1);
+      renderRows(key);regen(key);
+    });
+  });
+
+  function toggleWanFields(){
+    ['w1','w2'].forEach(function(w){
+      var t=document.getElementById('fl-'+w+'-type').value;
+      document.querySelectorAll('#fl-'+w+'-fields [data-show]').forEach(function(el){
+        var allowed=el.getAttribute('data-show').split(',');
+        el.style.display=allowed.indexOf(t)>=0?'flex':'none';
+      });
+    });
+    var showFo=document.getElementById('fl-chk-fo').checked;
+    var showSnmp=document.getElementById('fl-chk-snmp').checked;
+    var showDdns=document.getElementById('fl-chk-ddns').checked;
+    document.getElementById('wrap-fo-ip').style.display=showFo?'flex':'none';
+    document.getElementById('wrap-snmp-comm').style.display=showSnmp?'flex':'none';
+    document.getElementById('wrap-ddns-host').style.display=showDdns?'flex':'none';
+    document.getElementById('wrap-ddns-wan').style.display=showDdns?'flex':'none';
+  }
+  ['fl-w1-type','fl-w2-type','fl-chk-fo','fl-chk-snmp','fl-chk-ddns'].forEach(function(id){
+    document.getElementById(id).addEventListener('change',toggleWanFields);
+  });
+  toggleWanFields();
+
+  var val=function(id){return document.getElementById(id).value;}, chk=function(id){return document.getElementById(id).checked;};
+  var copyRows=function(k){return ROWS[k].data.map(function(r){return Object.assign({},r);});};
+  var CFG={
+    full:function(){return {
+      w1Port:val('fl-w1-port'),w1Name:val('fl-w1-name'),w1Type:val('fl-w1-type'),w1Ip:val('fl-w1-ip'),w1Gw:val('fl-w1-gw'),w1Pppoe:val('fl-w1-pppoe'),w1User:val('fl-w1-user'),w1Pass:val('fl-w1-pass'),
+      w2Port:val('fl-w2-port'),w2Name:val('fl-w2-name'),w2Type:val('fl-w2-type'),w2Ip:val('fl-w2-ip'),w2Gw:val('fl-w2-gw'),w2Pppoe:val('fl-w2-pppoe'),w2User:val('fl-w2-user'),w2Pass:val('fl-w2-pass'),
+      lanPorts:val('fl-lan-ports'),lanIp:val('fl-lan-ip'),lanNet:val('fl-lan-net'),lanPool:val('fl-lan-pool'),lanLease:val('fl-lan-lease'),dns:val('fl-dns'),
+      ident:val('fl-ident'),foIp:val('fl-fo-ip'),wwwPort:val('fl-www-port'),snmpComm:val('fl-snmp-comm'),ddnsHost:val('fl-ddns-host'),ddnsWan:val('fl-ddns-wan'),
+      chkFo:chk('fl-chk-fo'),chkM2:chk('fl-chk-m2'),chkSnmp:chk('fl-chk-snmp'),chkDdns:chk('fl-chk-ddns')
+    };},
+    pcc:function(){return {wans:copyRows('pcc'),lan:val('pcc-lan'),locals:val('pcc-locals')};},
+    failover:function(){return {gw1:val('fo-gw1'),host:val('fo-host'),comment:val('fo-comment')};},
+    cake:function(){return {targets:val('ck-targets'),links:copyRows('cake')};},
+    portfwd:function(){return {inValue:val('pf-in'),rules:copyRows('portfwd')};}
+  };
+  var GEN={full:genFull,pcc:genPCC,failover:genFailover,cake:genCake,portfwd:genPF};
+  var BADGE={check:'Verificação',none:'Sem impacto',low:'Aplicação Direta',high:'Altera tráfego · Safe Mode',rollback:'Rollback'};
+
+  function renderOut(key,res){
+    var host=document.getElementById('out-'+key), h='';
+    if(res.errors.length){
+      host.innerHTML='<div class="note err"><b>Corrija os parâmetros para gerar o script</b><ul>'+res.errors.map(function(e){return '<li>'+esc(e)+'</li>';}).join('')+'</ul></div>';
+      LAST[key]=null;return;
+    }
+    if(res.summary)h+=res.summary;
+    if(res.warnings.length)h+='<div class="note warn"><b>Atenção</b><ul>'+res.warnings.map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+'</ul></div>';
+    var n=0;
+    res.blocks.forEach(function(b,i){
+      b.code=ascii(b.code);
+      var label=b.impact==='rollback'?'ROLLBACK':'BLOCO '+(n++);
+      h+='<div class="block imp-'+b.impact+'"><div class="block-h"><span class="block-n">'+label+'</span><span class="block-t">'+esc(b.title)+'</span><span class="badge '+b.impact+'">'+BADGE[b.impact]+'</span><button type="button" class="btn ghost sm" data-copy="'+i+'">Copiar</button></div>';
+      if(b.desc)h+='<p class="block-d">'+b.desc+'</p>';
+      if(b.impact==='high')h+='<div class="safemode">⚠ Ative o <b>Safe Mode</b> (Ctrl+X no Terminal do WinBox/SSH) antes de colar. Se o acesso cair, o RouterOS desfaz o bloco automaticamente.</div>';
+      h+='<div class="term"><div class="term-h"><span><i></i><i></i><i></i> [admin@MikroTik] &gt; RouterOS v7</span><span>'+b.code.split('\n').length+' linhas</span></div><pre class="code">'+hl(b.code)+'</pre></div>';
+      var ex=(b.expect||[]).filter(Boolean);
+      if(ex.length)h+='<div class="expect"><b>Resultado esperado</b><ul>'+ex.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul></div>';
+      h+='</div>';
+    });
+    host.innerHTML=h;LAST[key]=res;
+  }
+  function regen(key){if(!GEN[key])return;if(ROWS[key])syncRows(key);renderOut(key,GEN[key](CFG[key]()));}
+
+  function buildScript(key){
+    var res=LAST[key];if(!res)return null;
+    var L=['# ============================================================','# Smart Sigma - RouterOS v7 Script Generator - '+TITLES[key],'# Gerado em '+new Date().toLocaleString('pt-BR')+' - RouterOS v7','# ============================================================',''];
+    var n=0;
+    res.blocks.forEach(function(b){
+      if(b.impact==='rollback'){L.push('# ===== ROLLBACK: remova o "# " das linhas abaixo para desfazer =====');b.code.split('\n').forEach(function(l){L.push('# '+l);});L.push('');return;}
+      L.push('# ===== BLOCO '+(n++)+' - '+b.title+' ['+BADGE[b.impact]+'] =====');L.push('/');L.push(b.code);L.push('');
+    });
+    return ascii(L.join('\n'));
+  }
+  function toast(msg){var t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(function(){t.classList.remove('on');},1800);}
+  function copyText(txt){
+    var done=function(){toast('Copiado para a área de transferência');};
+    var fb=function(){var ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){toast('Não foi possível copiar');}ta.remove();};
+    if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(txt).then(done,fb);else fb();
+  }
+
+  document.addEventListener('click',function(ev){
+    var b=ev.target.closest('button');if(!b)return;
+    var page=b.closest('.page'), key=page&&page.getAttribute('data-gen');
+    if(b.hasAttribute('data-copy')&&key&&LAST[key]){copyText(LAST[key].blocks[+b.getAttribute('data-copy')].code);}
+    else if(b.hasAttribute('data-copyall')){var s=buildScript(b.getAttribute('data-copyall'));if(s)copyText(s);else toast('Corrija os erros antes de copiar');}
+    else if(b.hasAttribute('data-dl')){
+      var k=b.getAttribute('data-dl'),txt=buildScript(k);if(!txt){toast('Corrija os erros antes de baixar');return;}
+      var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt.replace(/\n/g,'\r\n')],{type:'text/plain'}));a.download=k+'-routeros-v7.rsc';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
+    }
+  });
+  document.querySelectorAll('.page[data-gen]').forEach(function(p){
+    var key=p.getAttribute('data-gen'), f=function(ev){if(ev.target.closest('#out-'+key))return;regen(key);};
+    p.addEventListener('input',f);p.addEventListener('change',f);
+  });
+
+  function route(){
+    var id=(location.hash||'#home').slice(1);if(!document.getElementById('page-'+id))id='home';
+    document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('on',p.id==='page-'+id);});
+    document.querySelectorAll('nav.side a').forEach(function(a){a.classList.toggle('active',a.getAttribute('data-page')===id);});
+    window.scrollTo(0,0);
+  }
+  window.addEventListener('hashchange',route);
+  Object.keys(GEN).forEach(regen);
+  route();
+})();
+</script>
+</body>
+</html>
